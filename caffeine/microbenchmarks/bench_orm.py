@@ -73,6 +73,13 @@ bench_get_all_with_many_fields = NanoBenchmark(
 )
 
 
+def bench_link_validation():
+	user = frappe.get_cached_doc("User", "Administrator")
+	user._action = "save"
+	user._validate_links()
+	frappe.db.value_cache.clear()  # Avoid reusing local validations
+
+
 @lru_cache
 def get_all_roles():
 	return frappe.get_all("Role", order_by="creation asc", limit=10, pluck="name")
