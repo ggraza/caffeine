@@ -8,6 +8,14 @@ from frappe.utils.user import AUTOMATIC_ROLES
 
 from caffeine.microbenchmarks.utils import NanoBenchmark
 
+try:
+	from frappe.tests.utils import toggle_test_mode
+except ImportError:
+
+	def toggle_test_mode(*args, **kwargs):
+		frappe.flags.in_test = True
+
+
 TEST_USER = "test@example.com"
 
 
@@ -115,8 +123,8 @@ def type_checked_function(x: int, y: str) -> float:
 
 bench_request_type_checking = NanoBenchmark(
 	"type_checked_function(x=42, y='42')",
-	setup="frappe.flags.in_test = True",
-	globals={"type_checked_function": type_checked_function},
+	setup="toggle_test_mode(True)",
+	globals={"type_checked_function": type_checked_function, "toggle_test_mode": toggle_test_mode},
 )
 
 
