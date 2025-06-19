@@ -3,7 +3,7 @@ app_title = "Caffeine"
 app_publisher = "Frappe"
 app_description = "Benchmarks and performance testing for Frappe ecosystem"
 app_email = "developers@frappe.io"
-app_license = "mit"
+app_license = "agpl-3.0"
 
 # Apps
 # ------------------
@@ -244,3 +244,6 @@ app_license = "mit"
 # default_log_clearing_doctypes = {
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
+
+
+override_doctype_class = {"Warehouse": "caffeine.overrides.warehouse.WarehouseOverride"}

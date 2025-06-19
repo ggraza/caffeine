@@ -46,7 +46,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.13'
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -79,6 +79,14 @@ jobs:
           sudo apt update
           sudo apt-get install mariadb-client
 
+      - name: Install K6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
       - name: Setup
         run: |
           pip install frappe-bench
@@ -89,18 +97,44 @@ jobs:
       - name: Install
         working-directory: /home/runner/frappe-bench
         run: |
+          bench get-app erpnext
           bench get-app caffeine $GITHUB_WORKSPACE
           bench setup requirements --dev
           bench new-site --db-root-password root --admin-password admin test_site
-          bench --site test_site execute frappe.utils.install.before_tests
+          bench --site test_site install-app erpnext
           bench --site test_site install-app caffeine
+          bench use test_site
+          bench start &>> bench_start.log &
+          bench --site test_site set-config allow_tests true
+          bench --site test_site setup-loadtest-data --n-items 10 --users-per-warehouse 1 --customers-per-warehouse 1
         env:
           CI: 'Yes'
 
-      - name: Run Tests
+      - name: Run Microbenchmarks
         working-directory: /home/runner/frappe-bench/sites
         run: |
-          bench --site test_site set-config allow_tests true
           bench --site test_site run-microbenchmarks -l2 -p2 -w0 --quiet
         env:
-          TYPE: server
+          CI: "Yes"
+
+      - name: Run Loadtest
+        working-directory: /home/runner/frappe-bench
+        run: |
+          k6 run --vus 1 --throw ./apps/caffeine/caffeine/loadtest/script.js
+        env:
+          CI: "Yes"
+          BASE_URL: "http://127.0.0.1:8000"
+          NUM_ITEMS: 10
+          CUSTOMERS_PER_WAREHOUSE: 1
+          USERS_PER_WAREHOUSE: 1
+
+      - name: Show bench output
+        working-directory: /home/runner/frappe-bench
+        if: ${{ always() }}
+        run: |
+          cat bench_start.log || true
+          cd logs
+          for f in ./*.log*; do
+            echo "Printing log: $f";
+            cat $f
+          done
