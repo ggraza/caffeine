@@ -49,7 +49,7 @@ This should get you roughly +/- 1% standard deviation results.
 You can read this post for long-form explanations: https://ankush.dev/p/reliable-benchmarking
 
 
-### Writing Microbenchmarks
+#### Writing Microbenchmarks
 
 1. Find appropriate `bench_{module}.py` file.
 2. Add a new function with `bench_` prefix, the function body is your benchmark.
