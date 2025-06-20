@@ -1,10 +1,13 @@
+from functools import lru_cache
+
 import frappe
-from frappe.utils import execute_in_shell
+from frappe.utils.scheduler import enqueue_events_for_site
 
 
-# def bench_bg_job_overheads():
-# 	for _ in range(10):
-# 		frappe.enqueue(frappe.ping)
-# 	# XXX: We are counting startup costs into this.
-# 	_, stderr = execute_in_shell("bench worker --burst", check_exit_code=True)
-# 	assert b"Job OK" in stderr
+def bench_scheduling():
+	enqueue_events_for_site(get_site_name())
+
+
+@lru_cache  # This is "cached" because scheduler destroys locals
+def get_site_name():
+	return frappe.local.site
