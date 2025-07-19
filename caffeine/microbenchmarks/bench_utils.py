@@ -5,6 +5,7 @@ import frappe
 from frappe.utils import flt
 from frappe.utils.caching import redis_cache, request_cache, site_cache
 from frappe.utils.data import cint, get_datetime
+from frappe.utils.safe_exec import safe_exec
 
 from caffeine.microbenchmarks.utils import NanoBenchmark
 
@@ -110,3 +111,16 @@ def test_fn(doctype: str, **kwargs):
 
 
 bench_frappe_call = NanoBenchmark("frappe.call(fn, {})", globals={"fn": test_fn})
+
+
+script = """
+def incr(x):
+	x = x + 1
+	return x
+
+a = incr(1)
+"""
+
+
+def bench_safe_exec():
+	return safe_exec(script)
